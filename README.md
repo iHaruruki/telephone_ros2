@@ -7,7 +7,7 @@
 Install library
 ```bash
 sudo apt update
-sudo apt install portaudio19-dev
+sudo apt install portaudio19-dev libfftw3-dev libopencv-dev
 ```
 clone
 ```bash
