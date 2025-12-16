@@ -37,6 +37,10 @@ Play audio
 # Terminal 2
 ros2 run audio_mic_pub_cpp audio_player_node --ros-args -p topic:=audio_b_out -p sample_rate:=16000 -p channels:=1
 ```
+spectrum_viewer
+```bash
+ros2 run telephone_ros2 spectrum_viewer_node   --ros-args -p topic:=audio_b_out -p sample_rate:=16000 -p fft_size:=1024
+```
 
 ### PC B side
 Mic → audio_a_out
@@ -48,6 +52,10 @@ Play audio
 ```bash
 # Terminal 2
 ros2 run audio_mic_pub_cpp audio_player_node --ros-args -p topic:=audio_a_out -p sample_rate:=16000 -p channels:=1
+```
+spectrum_viewer
+```bash
+ros2 run telephone_ros2 spectrum_viewer_node   --ros-args -p topic:=audio_a_out -p sample_rate:=16000 -p fft_size:=1024
 ```
 
 ## 👤 Authors
