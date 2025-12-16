@@ -15,7 +15,7 @@ public:
   : Node("audio_player_node")
   {
     // Parameters
-    declare_parameter<std::string>("topic", "audio_in");   // Input topic
+    declare_parameter<std::string>("topic", "audio_out");   // Input topic
     declare_parameter<int>("sample_rate", 16000);
     declare_parameter<int>("channels", 1);
 
