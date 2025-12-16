@@ -32,10 +32,17 @@ target_link_libraries(mic_publisher_node ${PORTAUDIO_LIBRARY})
 add_executable(audio_subscriber_node src/audio_subscriber_node.cpp)
 ament_target_dependencies(audio_subscriber_node rclcpp std_msgs)
 
+# Player node
+add_executable(audio_player_node src/audio_player_node.cpp)
+ament_target_dependencies(audio_player_node rclcpp std_msgs)
+target_link_libraries(audio_player_node ${PORTAUDIO_LIBRARY})
+
+
 
 install(TARGETS
   mic_publisher_node
   audio_subscriber_node
+  audio_player_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
