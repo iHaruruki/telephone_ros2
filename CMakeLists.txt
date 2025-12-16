@@ -14,13 +14,30 @@ find_package(std_msgs REQUIRED)
 find_path(PORTAUDIO_INCLUDE_DIR portaudio.h)
 find_library(PORTAUDIO_LIBRARY portaudio)
 
+# OpenCV を探す（OpenCV4 対応）
+find_package(OpenCV REQUIRED)
+if(OpenCV_FOUND)
+  message(STATUS "Found OpenCV version: ${OpenCV_VERSION}")
+  message(STATUS "OpenCV include dirs:  ${OpenCV_INCLUDE_DIRS}")
+  message(STATUS "OpenCV libraries: ${OpenCV_LIBS}")
+else()
+  message(FATAL_ERROR "OpenCV not found.  Please install libopencv-dev")
+endif()
+
 if(NOT PORTAUDIO_INCLUDE_DIR OR NOT PORTAUDIO_LIBRARY)
   message(FATAL_ERROR "PortAudio not found. Please install portaudio19-dev.")
+endif()
+
+# FFTW3
+find_library(FFTW3_LIBRARY fftw3)
+if(NOT FFTW3_LIBRARY)
+  message(FATAL_ERROR "FFTW3 not found. Please install libfftw3-dev.")
 endif()
 
 include_directories(
   include
   ${PORTAUDIO_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 # Sending node (microphone → any topic)
@@ -33,10 +50,15 @@ add_executable(audio_subscriber_node src/audio_sub.cpp)
 ament_target_dependencies(audio_subscriber_node rclcpp std_msgs)
 target_link_libraries(audio_subscriber_node ${PORTAUDIO_LIBRARY})
 
+# Spectrum viewer node
+add_executable(spectrum_viewer_node src/spectrum_viewer.cpp)
+ament_target_dependencies(spectrum_viewer_node rclcpp std_msgs)
+target_link_libraries(spectrum_viewer_node ${FFTW3_LIBRARY} ${OpenCV_LIBS})
 
 install(TARGETS
   audio_publisher_node
   audio_subscriber_node
+  spectrum_viewer_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
