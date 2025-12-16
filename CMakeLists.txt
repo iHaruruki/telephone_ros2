@@ -23,12 +23,19 @@ include_directories(
   ${PORTAUDIO_INCLUDE_DIR}
 )
 
+# Publisher node
 add_executable(mic_publisher_node src/mic_publisher_node.cpp)
 ament_target_dependencies(mic_publisher_node rclcpp std_msgs)
 target_link_libraries(mic_publisher_node ${PORTAUDIO_LIBRARY})
 
+# Subscriber node
+add_executable(audio_subscriber_node src/audio_subscriber_node.cpp)
+ament_target_dependencies(audio_subscriber_node rclcpp std_msgs)
+
+
 install(TARGETS
   mic_publisher_node
+  audio_subscriber_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
