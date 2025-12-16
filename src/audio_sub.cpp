@@ -14,8 +14,8 @@ public:
   AudioPlayerNode()
   : Node("audio_player_node")
   {
-    // パラメータ
-    declare_parameter<std::string>("topic", "audio_in");   // 受信トピック
+    // Parameters
+    declare_parameter<std::string>("topic", "audio_in");   // Input topic
     declare_parameter<int>("sample_rate", 16000);
     declare_parameter<int>("channels", 1);
 
@@ -28,7 +28,7 @@ public:
       "Audio player: topic=%s, rate=%d Hz, channels=%d",
       topic_.c_str(), sample_rate_, channels_);
 
-    // PortAudio 初期化
+    // PortAudio initialization
     PaError err = Pa_Initialize();
     if (err != paNoError) {
       RCLCPP_FATAL(get_logger(), "PortAudio init failed: %s", Pa_GetErrorText(err));
@@ -69,14 +69,14 @@ public:
       throw std::runtime_error("Pa_StartStream failed");
     }
 
-    // 任意トピックを購読
+    // Subscribe to arbitrary topic
     subscription_ = create_subscription<std_msgs::msg::Int16MultiArray>(
       topic_,
       10,
       std::bind(&AudioPlayerNode::audio_callback, this, std::placeholders::_1)
     );
 
-    RCLCPP_INFO(get_logger(), "Audio player started. Subscribing to %s", topic_.c_str());
+    RCLCPP_INFO(get_logger(), "Audio player started.  Subscribing to %s", topic_.c_str());
   }
 
   ~AudioPlayerNode() override
@@ -119,7 +119,7 @@ public:
         out[i] = audio_buffer_[i];
       }
       for (size_t i = copy_n; i < samples_needed; ++i) {
-        out[i] = 0;  // 無音
+        out[i] = 0;  // silence
       }
       audio_buffer_.erase(audio_buffer_.begin(), audio_buffer_.begin() + copy_n);
     } else {
@@ -132,13 +132,13 @@ public:
     return paContinue;
   }
 
-  void audio_callback(const std_msgs::msg::Int16MultiArray::SharedPtr msg)
+  void audio_callback(const std_msgs::msg::Int16MultiArray:: SharedPtr msg)
   {
     const auto & data = msg->data;
     if (data.empty()) return;
 
     std::lock_guard<std::mutex> lock(mutex_);
-    audio_buffer_.insert(audio_buffer_.end(), data.begin(), data.end());
+    audio_buffer_.insert(audio_buffer_. end(), data.begin(), data.end());
   }
 
 private:
@@ -157,7 +157,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<AudioPlayerNode>();
+  auto node = std:: make_shared<AudioPlayerNode>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;

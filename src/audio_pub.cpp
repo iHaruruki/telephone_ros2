@@ -14,8 +14,8 @@ public:
   MicPublisherNode()
   : Node("mic_publisher_node")
   {
-    // パラメータ
-    declare_parameter<std::string>("topic", "audio_out");  // 送信先トピック
+    // Parameters
+    declare_parameter<std::string>("topic", "audio_out");  // Output topic
     declare_parameter<int>("sample_rate", 16000);
     declare_parameter<int>("channels", 1);
     declare_parameter<int>("chunk_ms", 50);
@@ -32,23 +32,23 @@ public:
 
     RCLCPP_INFO(
       get_logger(),
-      "Mic publisher: topic=%s, rate=%d Hz, channels=%d, chunk=%d ms (%d samples)",
+      "Mic publisher:  topic=%s, rate=%d Hz, channels=%d, chunk=%d ms (%d samples)",
       topic_.c_str(), sample_rate_, channels_, chunk_ms_, chunk_samples_);
 
-    // PortAudio 初期化
+    // PortAudio initialization
     PaError err = Pa_Initialize();
     if (err != paNoError) {
       RCLCPP_FATAL(get_logger(), "PortAudio init failed: %s", Pa_GetErrorText(err));
       throw std::runtime_error("PortAudio init failed");
     }
 
-    input_params_.device = Pa_GetDefaultInputDevice();
+    input_params_. device = Pa_GetDefaultInputDevice();
     if (input_params_.device == paNoDevice) {
       RCLCPP_FATAL(get_logger(), "No default input device.");
       throw std::runtime_error("No default input device.");
     }
     const PaDeviceInfo *info = Pa_GetDeviceInfo(input_params_.device);
-    RCLCPP_INFO(get_logger(), "Using input device: %s", info->name);
+    RCLCPP_INFO(get_logger(), "Using input device:  %s", info->name);
 
     input_params_.channelCount = channels_;
     input_params_.sampleFormat = paInt16;  // 16bit PCM
@@ -108,7 +108,6 @@ public:
   int paCallbackImpl(const void *inputBuffer, unsigned long framesPerBuffer)
   {
     if (inputBuffer == nullptr) {
-      // 必要なら無音を送ってもよいが、ここではスキップ
       return paContinue;
     }
 
