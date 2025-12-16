@@ -37,12 +37,33 @@ add_executable(audio_player_node src/audio_player_node.cpp)
 ament_target_dependencies(audio_player_node rclcpp std_msgs)
 target_link_libraries(audio_player_node ${PORTAUDIO_LIBRARY})
 
+# ==== A ====
+add_executable(mic_publisher_a_node src/mic_publisher_a_node.cpp)
+ament_target_dependencies(mic_publisher_a_node rclcpp std_msgs)
+target_link_libraries(mic_publisher_a_node ${PORTAUDIO_LIBRARY})
+
+add_executable(audio_player_a_node src/audio_player_a_node.cpp)
+ament_target_dependencies(audio_player_a_node rclcpp std_msgs)
+target_link_libraries(audio_player_a_node ${PORTAUDIO_LIBRARY})
+
+# ==== B ====
+add_executable(mic_publisher_b_node src/mic_publisher_b_node.cpp)
+ament_target_dependencies(mic_publisher_b_node rclcpp std_msgs)
+target_link_libraries(mic_publisher_b_node ${PORTAUDIO_LIBRARY})
+
+add_executable(audio_player_b_node src/audio_player_b_node.cpp)
+ament_target_dependencies(audio_player_b_node rclcpp std_msgs)
+target_link_libraries(audio_player_b_node ${PORTAUDIO_LIBRARY})
 
 
 install(TARGETS
   mic_publisher_node
   audio_subscriber_node
   audio_player_node
+  mic_publisher_a_node
+  audio_player_a_node
+  mic_publisher_b_node
+  audio_player_b_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
