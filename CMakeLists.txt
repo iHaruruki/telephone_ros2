@@ -10,6 +10,28 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
+# PortAudio の検出
+find_path(PORTAUDIO_INCLUDE_DIR portaudio.h)
+find_library(PORTAUDIO_LIBRARY portaudio)
+
+if(NOT PORTAUDIO_INCLUDE_DIR OR NOT PORTAUDIO_LIBRARY)
+  message(FATAL_ERROR "PortAudio not found. Please install portaudio19-dev.")
+endif()
+
+include_directories(
+  include
+  ${PORTAUDIO_INCLUDE_DIR}
+)
+
+add_executable(mic_publisher_node src/mic_publisher_node.cpp)
+ament_target_dependencies(mic_publisher_node rclcpp std_msgs)
+target_link_libraries(mic_publisher_node ${PORTAUDIO_LIBRARY})
+
+install(TARGETS
+  mic_publisher_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
