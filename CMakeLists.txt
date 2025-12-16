@@ -23,11 +23,20 @@ include_directories(
   ${PORTAUDIO_INCLUDE_DIR}
 )
 
+# Sending node (microphone → any topic)
+add_executable(audio_publisher_node src/audio_pub.cpp)
+ament_target_dependencies(audio_publisher_node rclcpp std_msgs)
+target_link_libraries(audio_publisher_node ${PORTAUDIO_LIBRARY})
 
+# Receiving node (any topic → speaker)
+add_executable(audio_subscriber_node src/audio_sub.cpp)
+ament_target_dependencies(audio_subscriber_node rclcpp std_msgs)
+target_link_libraries(audio_subscriber_node ${PORTAUDIO_LIBRARY})
 
 
 install(TARGETS
-  
+  audio_publisher_node
+  audio_subscriber_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
