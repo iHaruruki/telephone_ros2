@@ -3,7 +3,9 @@
 #include <deque>
 #include <string>
 #include <mutex>
+#include <array>
 #include <algorithm>
+#include <limits>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/int16_multi_array.hpp"
@@ -15,7 +17,6 @@ public:
   : Node("mixer_node")
   {
     // Parameters
-    // 入力トピック一覧（例：["/telephone/alice/out", "/telephone/bob/out", ...]）
     declare_parameter<std::vector<std::string>>(
       "input_topics",
       std::vector<std::string>{
@@ -32,23 +33,30 @@ public:
     sample_rate_  = get_parameter("sample_rate").as_int();
     channels_     = get_parameter("channels").as_int();
 
+    if (input_topics_.size() > MAX_INPUTS) {
+      RCLCPP_WARN(
+        get_logger(),
+        "input_topics has %zu entries, but MAX_INPUTS=%zu. Extra topics will be ignored.",
+        input_topics_.size(), MAX_INPUTS);
+      input_count_ = MAX_INPUTS;
+    } else {
+      input_count_ = input_topics_.size();
+    }
+
     RCLCPP_INFO(
       get_logger(),
       "MixerNode: inputs=%zu, output=%s, rate=%d, channels=%d",
-      input_topics_.size(), output_topic_.c_str(), sample_rate_, channels_
+      input_count_, output_topic_.c_str(), sample_rate_, channels_
     );
 
     // Publisher
     publisher_ = create_publisher<std_msgs::msg::Int16MultiArray>(output_topic_, 10);
 
-    // Resize buffers according to number of inputs
-    size_t n_inputs = input_topics_.size();
-    buffers_.resize(n_inputs);
-    mutexes_.resize(n_inputs);
-
-    // Subscribers
-    for (size_t i = 0; i < n_inputs; ++i) {
+    // Initialize buffers for each input actually used
+    for (size_t i = 0; i < input_count_; ++i) {
+      buffers_[i].clear();
       const auto & topic = input_topics_[i];
+
       auto cb = [this, i](const std_msgs::msg::Int16MultiArray::SharedPtr msg) {
         this->input_callback(i, msg);
       };
@@ -61,15 +69,17 @@ public:
 
     // Timer for mixing
     timer_ = create_wall_timer(
-      std::chrono::milliseconds(20),  // 50Hz mix
+      std::chrono::milliseconds(20),  // ~50Hz
       std::bind(&MixerNode::mix_and_publish, this)
     );
   }
 
 private:
+  static constexpr size_t MAX_INPUTS = 8;  // maximum number of inputs supported
+
   void input_callback(size_t idx, const std_msgs::msg::Int16MultiArray::SharedPtr msg)
   {
-    if (idx >= buffers_.size()) return;
+    if (idx >= input_count_) return;
 
     std::lock_guard<std::mutex> lock(mutexes_[idx]);
     auto & buf = buffers_[idx];
@@ -77,8 +87,8 @@ private:
     // Append incoming samples
     buf.insert(buf.end(), msg->data.begin(), msg->data.end());
 
-    // Limit buffer size to avoid unlimited growth
-    const size_t max_samples = sample_rate_ * channels_;  // 1 second buffer
+    // Limit buffer size (e.g., max 1 second of audio)
+    const size_t max_samples = static_cast<size_t>(sample_rate_) * channels_;
     if (buf.size() > max_samples) {
       buf.erase(buf.begin(), buf.end() - max_samples);
     }
@@ -86,30 +96,34 @@ private:
 
   void mix_and_publish()
   {
-    size_t n_inputs = buffers_.size();
-    if (n_inputs == 0) return;
+    if (input_count_ == 0) {
+      return;
+    }
 
     // Determine minimum available samples among all inputs
     size_t min_samples = std::numeric_limits<size_t>::max();
-    for (size_t i = 0; i < n_inputs; ++i) {
+    for (size_t i = 0; i < input_count_; ++i) {
       std::lock_guard<std::mutex> lock(mutexes_[i]);
       min_samples = std::min(min_samples, buffers_[i].size());
     }
 
-    // Not enough data to mix
+    // Not enough data
     if (min_samples == 0 || min_samples == std::numeric_limits<size_t>::max()) {
       return;
     }
 
     // Mix at most some chunk size to limit latency
-    const size_t max_chunk = static_cast<size_t>(0.02 * sample_rate_) * channels_;  // ~20ms
+    const size_t max_chunk =
+      static_cast<size_t>(0.02 * static_cast<double>(sample_rate_)) *
+      static_cast<size_t>(channels_);  // about 20ms
+
     size_t mix_samples = std::min(min_samples, max_chunk);
 
-    // Prepare mix buffer (float for headroom)
+    // Mix buffer in float for headroom
     std::vector<float> mix(mix_samples, 0.0f);
 
     // Accumulate from each input
-    for (size_t i = 0; i < n_inputs; ++i) {
+    for (size_t i = 0; i < input_count_; ++i) {
       std::lock_guard<std::mutex> lock(mutexes_[i]);
       auto & buf = buffers_[i];
 
@@ -125,13 +139,13 @@ private:
       buf.erase(buf.begin(), buf.begin() + mix_samples);
     }
 
-    // Normalize / clip to int16
+    // Convert back to int16 with clipping
     std_msgs::msg::Int16MultiArray out_msg;
     out_msg.data.resize(mix_samples);
 
     for (size_t s = 0; s < mix_samples; ++s) {
-      // Simple clipping; you can also divide by number of active inputs to reduce volume
       float v = mix[s];
+      // Simple hard clipping
       if (v > 32767.0f) v = 32767.0f;
       if (v < -32768.0f) v = -32768.0f;
       out_msg.data[s] = static_cast<int16_t>(v);
@@ -143,12 +157,13 @@ private:
   // Parameters
   std::vector<std::string> input_topics_;
   std::string output_topic_;
-  int sample_rate_;
-  int channels_;
+  int sample_rate_{16000};
+  int channels_{1};
+  size_t input_count_{0};
 
-  // Buffers per input
-  std::vector<std::vector<int16_t>> buffers_;
-  std::vector<std::mutex> mutexes_;
+  // Buffers & mutexes per input
+  std::array<std::vector<int16_t>, MAX_INPUTS> buffers_;
+  std::array<std::mutex, MAX_INPUTS> mutexes_;
 
   // ROS interfaces
   rclcpp::Publisher<std_msgs::msg::Int16MultiArray>::SharedPtr publisher_;
