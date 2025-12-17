@@ -73,7 +73,7 @@ ros2 run telephone_ros2 audio_player_node --ros-args -p topic:=/telephone/mixed/
 ```
 mixer_node
 ```bash
-ros2 run telephone_ros2 mixer_node --ros-args -p input_topics:="[\"/telephone/alice/ out\", \"/telephone/bob/out\", \"/telephone/charlie/out\"]" -p output_topic:=/telephone/mixed/out -p sample_rate:=16000 -p channels:=1
+ros2 run telephone_ros2 mixer_node --ros-args -p input_topics:="[\"/audio_a_out\", \"/audio_b_out\", \"/audio_c_out\"]" -p output_topic:=/telephone/mixed/out -p sample_rate:=16000 -p channels:=1
 ```
 
 #### PC B side
