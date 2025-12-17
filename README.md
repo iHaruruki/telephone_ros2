@@ -30,24 +30,20 @@ source install/setup.bash
 #### PC A side
 ```bash
 # 端末 A1: マイク → audio_a_out
-source ~/ros2_ws/install/setup.bash
-ros2 run audio_mic_pub_cpp mic_publisher_a_node
+ros2 run telephone_ros2 publisher_a_node
 ```
 ```bash
 # 端末 A2: audio_b_out を再生
-source ~/ros2_ws/install/setup.bash
-ros2 run audio_mic_pub_cpp audio_player_a_node
+ros2 run telephone_ros2 subscriber_a_node 
 ```
 #### PC B side
 ```bash
 # 端末 B1: マイク → audio_b_out
-source ~/ros2_ws/install/setup.bash
-ros2 run audio_mic_pub_cpp mic_publisher_b_node
+ros2 run telephone_ros2 publisher_b_node
 ```
 ```bash
 # 端末 B2: audio_a_out を再生
-source ~/ros2_ws/install/setup.bash
-ros2 run audio_mic_pub_cpp audio_player_b_node
+ros2 run telephone_ros2 subscriber_b_node 
 ```
 
 ### Operate on two devices
