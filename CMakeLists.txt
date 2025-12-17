@@ -55,10 +55,15 @@ add_executable(spectrum_viewer_node src/spectrum_viewer.cpp)
 ament_target_dependencies(spectrum_viewer_node rclcpp std_msgs)
 target_link_libraries(spectrum_viewer_node ${FFTW3_LIBRARY} ${OpenCV_LIBS})
 
+# Mixer node
+add_executable(mixer_node src/mixer.cpp)
+ament_target_dependencies(mixer_node rclcpp std_msgs)
+
 install(TARGETS
   audio_publisher_node
   audio_subscriber_node
   spectrum_viewer_node
+  mixer_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
